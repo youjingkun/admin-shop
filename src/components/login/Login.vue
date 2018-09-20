@@ -1,5 +1,4 @@
 <template>
-
   <el-row type="flex" class="row-bg form-box" justify="center" align="middle">
     <el-col :xs="12" :sm="10" :md="8" :lg="6" :xl="4" class="login-form">
       <el-form label-position="top" :model="loginForm" :rules="rules" ref="loginForm" label-width="100px">
@@ -21,6 +20,7 @@
 </template>
 
 <script>
+import axios from 'axios'
 export default {
   data() {
     return {
@@ -41,9 +41,30 @@ export default {
     }
   },
   methods: {
+    login() {
+      const { username, password } = this.loginForm
+      axios
+        .post('http://localhost:8888/api/private/v1/login', {
+          username,
+          password
+        })
+        .then(res => {
+          const { data, meta } = res.data
+          if (meta.status === 200) {
+            localStorage.setItem('token', data.token)
+            this.$router.push('/home')
+          } else {
+            this.$message.error({
+              message: '密码错误',
+              duration: 1000
+            })
+          }
+        })
+    },
     submitForm() {
       this.$refs.loginForm.validate(valid => {
         if (valid) {
+          this.login()
         }
       })
     },
