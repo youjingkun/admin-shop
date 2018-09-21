@@ -20,7 +20,6 @@
 </template>
 
 <script>
-import axios from 'axios'
 export default {
   data() {
     return {
@@ -43,8 +42,8 @@ export default {
   methods: {
     login() {
       const { username, password } = this.loginForm
-      axios
-        .post('http://localhost:8888/api/private/v1/login', {
+      this.$http
+        .post('/login', {
           username,
           password
         })
