@@ -30,8 +30,8 @@
       </el-table-column>
       <el-table-column prop="do" label="操作">
         <template slot-scope="scope">
-          <el-button type="primary" plain size="mini" icon="el-icon-edit"></el-button>
-          <el-button type="primary" plain size="mini" icon="el-icon-delete"></el-button>
+          <el-button type="primary" plain size="mini" icon="el-icon-edit" @click='editUser(scope.row)'></el-button>
+          <el-button type="primary" plain size="mini" icon="el-icon-delete" @click='delUser(scope.row.id)'></el-button>
           <el-button type="success" plain size="mini">
             <i class="el-icon-check"></i>分配角色</el-button>
         </template>
@@ -39,24 +39,42 @@
     </el-table>
     <el-pagination :page-size='pagesize' :current-page="currentpage" background layout="prev, pager, next" :total="total" @current-change='changePage'>
     </el-pagination>
-    <el-dialog title="添加用户" :visible.sync="dialogFormVisible">
-      <el-form :model="userform">
-        <el-form-item label="用户名" label-width='120px'>
-          <el-input v-model="userform.name" autocomplete="off"></el-input>
+    <el-dialog title="添加用户" :visible.sync="dialogFormVisible" @close='closeAddForm'>
+      <el-form :model="addUserForm" :rules="addrules" ref="addUserForm">
+        <el-form-item label="用户名" prop='username' label-width='120px'>
+          <el-input v-model="addUserForm.username" autocomplete="off"></el-input>
         </el-form-item>
-        <el-form-item label="密码" label-width='120px'>
-          <el-input v-model="userform.name" autocomplete="off"></el-input>
+        <el-form-item label="密码" prop='password' label-width='120px'>
+          <el-input v-model="addUserForm.password" autocomplete="off"></el-input>
         </el-form-item>
-        <el-form-item label="邮箱" label-width='120px'>
-          <el-input v-model="userform.name" autocomplete="off"></el-input>
+        <el-form-item label="邮箱" prop='email' label-width='120px'>
+          <el-input v-model="addUserForm.email" autocomplete="off"></el-input>
         </el-form-item>
-        <el-form-item label="手机" label-width='120px'>
-          <el-input v-model="userform.name" autocomplete="off"></el-input>
+        <el-form-item label="手机" prop='mobile' label-width='120px'>
+          <el-input v-model="addUserForm.mobile" autocomplete="off"></el-input>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button @click="dialogFormVisible = false">取 消</el-button>
-        <el-button type="primary" @click="dialogFormVisible = false">确 定</el-button>
+        <el-button type="primary" @click="addUser">确 定</el-button>
+      </div>
+    </el-dialog>
+
+    <el-dialog title="编辑用户" :visible.sync="aditFormVisible" @close='closeEditForm'>
+      <el-form :model="editUserForm" :rules="editRules" ref="editUserForm">
+        <el-form-item label="用户名" prop='username' label-width='120px'>
+          <el-input disabled v-model="editUserForm.username" autocomplete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="邮箱" prop='email' label-width='120px'>
+          <el-input v-model="editUserForm.email" autocomplete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="手机" prop='mobile' label-width='120px'>
+          <el-input v-model="editUserForm.mobile" autocomplete="off"></el-input>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="aditFormVisible = false">取 消</el-button>
+        <el-button type="primary" @click="uptateUser">确 定</el-button>
       </div>
     </el-dialog>
   </div>
@@ -68,15 +86,41 @@ export default {
     return {
       usersData: [],
       pagesize: 2,
-      currentpage: 2,
+      currentpage: 1,
       total: 0,
       query: '',
       dialogFormVisible: false,
-      userform: {
+      aditFormVisible: false,
+      addUserForm: {
         username: '',
         password: '',
         email: '',
         mobile: ''
+      },
+      editUserForm: {
+        id: -1,
+        username: '',
+        email: '',
+        mobile: ''
+      },
+      addrules: {
+        username: [
+          { required: true, message: '请输入用户名', trigger: 'blur' },
+          { min: 3, max: 6, message: '长度在 3 到 6 个字符', trigger: 'blur' }
+        ],
+        password: [
+          { required: true, message: '请输入密码', trigger: 'blur' },
+          { min: 3, max: 6, message: '长度在 3 到 6 个字符', trigger: 'blur' }
+        ]
+      },
+      editRules: {
+        mobile: [
+          {
+            pattern: /^(0|86|17951)?(13[0-9]|15[012356789]|166|17[3678]|18[0-9]|14[57])[0-9]{8}$/,
+            message: '手机号码格式不正确',
+            trigger: 'change'
+          }
+        ]
       }
     }
   },
@@ -84,6 +128,7 @@ export default {
     this.getUsers()
   },
   methods: {
+    // 请求全部数据
     getUsers(currentpage = 1) {
       this.$http
         .get('/users', {
@@ -94,22 +139,22 @@ export default {
           }
         })
         .then(res => {
-          console.log(res)
           const { data, meta } = res.data
           if (meta.status === 200) {
             this.usersData = data.users
             this.total = data.total
+            this.currentpage = data.pagenum
           }
         })
     },
+    // 分页切换
     changePage(currentpage) {
       this.getUsers(currentpage)
     },
+    // 修改启用
     changestatus(id, status) {
-      console.log(status)
-      console.log(id)
       this.$http.put(`users/${id}/state/${status}`).then(res => {
-        console.log(res)
+        // console.log(res)
         const { data, meta } = res.data
         if (meta.status === 200) {
           if (data.mg_state === 0) {
@@ -128,12 +173,97 @@ export default {
         }
       })
     },
+    // 搜索
     queryUser() {
       this.currentpage = 1
       this.getUsers()
     },
+    // 展示添加对话框
     showAddDialog() {
       this.dialogFormVisible = true
+    },
+    // 关闭添加对话框并重置对话框
+    closeAddForm() {
+      this.$refs.addUserForm.resetFields()
+    },
+    // 关闭编辑对话框并重置对话框
+    closeEditForm() {
+      this.$refs.editUserForm.resetFields()
+    },
+    // 添加功能
+    addUser() {
+      this.$refs.addUserForm.validate(valid => {
+        if (valid) {
+          this.$http.post('/users', this.addUserForm).then(res => {
+            // console.log(res)
+            const { meta } = res.data
+            if (meta.status === 201) {
+              this.dialogFormVisible = false
+              this.getUsers(this.currentpage)
+            }
+          })
+        } else {
+          return false
+        }
+      })
+    },
+    // 删除功能
+    delUser(id) {
+      this.$confirm('您确定删除此用户吗?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      })
+        .then(() => {
+          this.$http.delete(`users/${id}`).then(res => {
+            // console.log(res)
+            const { meta } = res.data
+            if (meta.status === 200) {
+              this.$message({
+                type: 'success',
+                message: '删除成功!'
+              })
+              this.usersData.splice(
+                this.usersData.findIndex(item => {
+                  return item.id === id
+                }),
+                1
+              )
+              if (this.usersData.length === 0) {
+                this.getUsers(--this.currentpage)
+              }
+            }
+          })
+        })
+        .catch(() => {
+          this.$message({
+            type: 'info',
+            message: '已取消删除'
+          })
+        })
+    },
+    // 展示编辑功能
+    editUser(userData) {
+      this.aditFormVisible = true
+      for (const key in this.editUserForm) {
+        this.editUserForm[key] = userData[key]
+      }
+    },
+    // 编辑功能
+    uptateUser() {
+      this.$refs.editUserForm.validate(valid => {
+        if (valid) {
+          const { id, email, mobile } = this.editUserForm
+          this.$http.put(`users/${id}`, { email, mobile }).then(res => {
+            if (res.data.meta.status === 200) {
+              this.aditFormVisible = false
+              this.getUsers(this.currentpage)
+            }
+          })
+        } else {
+          return false
+        }
+      })
     }
   }
 }
