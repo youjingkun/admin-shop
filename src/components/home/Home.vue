@@ -18,7 +18,7 @@
     </el-header>
     <el-container>
       <el-aside width="200px">
-        <el-menu :router='true' default-active="/home/users" :unique-opened='true' class="el-menu-vertical-demo" @open="handleOpen" @close="handleClose" background-color="#545c64" text-color="#fff" active-text-color="#ffd04b">
+        <el-menu :router='true' default-active="1" :unique-opened='true' class="el-menu-vertical-demo" @open="handleOpen" @close="handleClose" background-color="#545c64" text-color="#fff" active-text-color="#ffd04b">
           <el-submenu index="1">
             <template slot="title">
               <i class="el-icon-location"></i>
@@ -36,13 +36,13 @@
               <i class="el-icon-location"></i>
               <span>权限管理</span>
             </template>
-            <el-menu-item index="2-1">
+            <el-menu-item index="/home/roles">
               <template slot="title">
                 <i class="el-icon-menu"></i>
                 <span>角色列表</span>
               </template>
             </el-menu-item>
-            <el-menu-item index="2-2">
+            <el-menu-item index="/home/rights">
               <template slot="title">
                 <i class="el-icon-menu"></i>
                 <span>权限列表</span>
